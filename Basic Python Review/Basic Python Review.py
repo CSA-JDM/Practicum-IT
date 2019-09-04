@@ -4,7 +4,7 @@
 """
 Basic Python review.
 
-Copyright (C) 2018 Jacob Meadows
+Copyright (C) 2019 Jacob Meadows
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ class App:
         self.texts.clear()
         self.buttons.clear()
         self.text_inputs.clear()
-        self.texts["car_color"] = TextObject(text="What color is the car?", rect=(60, 100, 240, 30),
+        self.texts["car_color"] = TextObject(text="What color is the car?\n(Real color)", rect=(60, 100, 240, 30),
                                              justify="center", fg_color=(0, 255, 0))
         self.text_inputs["car_color"] = TextInput(self, text="", rect=(300, 100, 200, 30), fg_color=(0, 255, 0),
                                                   restriction=string.ascii_letters, limit=12)
@@ -136,13 +136,12 @@ class App:
         self.texts.clear()
         self.buttons.clear()
         self.text_inputs.clear()
-        self.texts["port"] = TextObject(text="Port:", rect=(200, 100, 200, 30), fg_color=(0, 255, 0))
+        self.texts["port"] = TextObject(text="Port:\n\n(1 - 65535)", rect=(200, 100, 200, 30), fg_color=(0, 255, 0))
         self.text_inputs["port"] = TextInput(self, text="", rect=(250, 100, 200, 30), fg_color=(0, 255, 0), limit=5,
                                              restriction=string.digits)
-        program_socket = socket.socket()
 
         def submit_command():
-            if len(self.text_inputs["port"].text) > 0:
+            if len(self.text_inputs["port"].text) > 0 and 1 <= int(self.text_inputs["port"].text) <= 65535:
                 self.texts["ping_chat"] = TextObject(text="", rect=(20, 300, 600, 30), fg_color=(0, 255, 0), width=1)
                 random_ip_addresses = []
                 while len(random_ip_addresses) < 10:
@@ -155,15 +154,14 @@ class App:
                     self.texts["ping_chat"].render(self.window)
                     self.buttons["menu"].render(self.window)
                     pygame.display.flip()
-                    try:
-                        program_socket.connect((ip_address, int(self.text_inputs["port"].text)))
-                        test = True
-                    except TimeoutError:
-                        test = False
+                    program_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    program_socket.settimeout(2)
+                    test = program_socket.connect_ex((ip_address, int(self.text_inputs["port"].text)))
                     if test:
-                        self.texts["ping_chat"].text += "Success!\n"
-                    else:
                         self.texts["ping_chat"].text += "No response.\n"
+                    else:
+                        self.texts["ping_chat"].text += "Success!\n"
+                        program_socket.shutdown(2)
                     self.texts["ping_chat"].text_rect[1] -= 47
                     self.texts["ping_chat"].rect[1] -= 47
                     self.texts["ping_chat"].text_rect[3] += 45
@@ -368,4 +366,3 @@ class TextInput(TextObject):
 
 if __name__ == "__main__":
     App()
-    
